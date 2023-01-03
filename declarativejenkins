@@ -1,0 +1,36 @@
+pipeline{
+  agent any 
+  tools {
+    maven "maven3.8.6"
+  }  
+  stages {
+    stage('1GetCode'){
+      steps{
+        sh "echo 'cloning the latest application version' "
+        git credentialsId: '0680c32b-c40a-4bd4-ae63-71c2708aa6f0', url: 'https://github.com/shish990/maven-web-application'
+      }
+    }
+    
+    stage('4CodeQuality'){
+      steps{
+        sh "echo 'Perfoming CodeQualityAnalysis' "
+        sh "mvn sonar:sonar"
+      }
+    } 
+    stage('5uploadNexus'){
+      steps{
+        sh "mvn deploy"
+      }
+    } 
+    stage('8deploy2prod'){
+      steps{
+        deploy adapters: [tomcat9(credentialsId: 'tomwanjiku', path: '', url:'http://3.15.173.253:8080/')], contextPath: null, war: 'target/*war'  
+    }     
+    }
+}
+    post{
+    always{
+      emailext body: 'Please check build status.group job', recipientProviders: [contributor(), developers()], subject: 'success', to: 'phykon99@gmail].com'
+}
+}
+  }
